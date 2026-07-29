@@ -2,8 +2,6 @@
 
 2026-07-29
 
-*Testing `boopiter`’s sweet new sharing feature.*
-
 <div class="boopcell boop-prompt">
 
 boop!

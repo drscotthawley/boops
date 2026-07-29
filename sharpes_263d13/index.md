@@ -2,8 +2,6 @@
 
 2026-07-29
 
-> A little tutorial I’m putting together for myself
-
 <div class="boopcell boop-prompt">
 
 Can you give me some code that will illustrate the principle of
