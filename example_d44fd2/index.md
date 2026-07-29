@@ -2,6 +2,8 @@
 
 2026-07-29
 
+*Showcasing the awesome stuff made possible by `boopiter`*
+
 ``` python
 import matplotlib.pyplot as plt
 import tqdm.auto as tqdm
