@@ -7,8 +7,7 @@
 boop!
 
 <figure>
-<img src="../boopimg/148bbbd99d6bdfd7dcfaa8fa962c97cb.jpg"
-alt="pasted image" />
+<img src="148bbbd99d6bdfd7dcfaa8fa962c97cb.jpg" alt="pasted image" />
 <figcaption aria-hidden="true">pasted image</figcaption>
 </figure>
 
