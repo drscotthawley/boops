@@ -2,7 +2,7 @@
 
 2026-07-29
 
-*A little tutorial I’m putting together for myself*
+> A little tutorial I’m putting together for myself
 
 <div class="boopcell boop-prompt">
 
