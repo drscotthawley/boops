@@ -1,12 +1,5 @@
 [
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "boops",
-    "section": "",
-    "text": "Example\n\n\n\n\n\n2026-07-29\n\n\n\n\n\nNo matching items"
-  },
-  {
     "objectID": "example_d44fd2/index.html",
     "href": "example_d44fd2/index.html",
     "title": "Example",
@@ -26,5 +19,12 @@
     "title": "Example",
     "section": "Progress Bars",
     "text": "Progress Bars\nWe can only use the regular TQDM as if we were in a terminal because the notebook version requires IPy widgets that I’m not going to implement"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "boops",
+    "section": "",
+    "text": "Example\n\n\n\n\n\n2026-07-29\n\n\n\n\n\nNo matching items"
   }
 ]

@@ -1,0 +1,188 @@
+# docsprocs
+
+2026-07-29
+
+> A docs-build notebook processor that color-codes cells by boopiter
+> type, so the rendered site echoes the app’s colored left bars.
+
+<div class="boopcell boop-note">
+
+Registered via `doc_procs` in `pyproject.toml [tool.nbdev]`,
+`color_cells` runs over every notebook during the docs build (before
+Quarto renders). It wraps each markdown/raw cell’s source in a Quarto
+fenced div classed by its boopiter cell type (`.boop-note` green,
+`.boop-prompt` red, `.boop-raw` orange); `styles.css` turns those into
+the colored left bar. Code cells already carry `.cell-code`, so they’re
+colored in CSS alone. The page’s H1 title cell is left untouched so
+Quarto’s title handling isn’t disturbed.
+
+</div>
+
+::: {.cell 0=‘e’ 1=‘x’ 2=‘p’ 3=‘o’ 4=‘r’ 5=‘t’}
+
+``` python
+import re
+
+# a Prompt+Reply markdown cell (solveit encoding) carries this separator -- see serialize.py
+_SEP_RE = re.compile(r'##### 🤖Reply🤖<!-- SOLVEIT_SEPARATOR_[0-9a-f]+ -->')
+
+def color_cells(cell):
+    "nbdev docs processor: wrap a markdown/raw cell's source in a Quarto fenced div classed by its boopiter cell type, so styles.css can draw boopiter's colored left bar (green note / red prompt / orange raw). Code cells carry `.cell-code` and are colored via CSS; the page-title (H1) cell is left alone."
+    t = cell.get('cell_type'); src = cell.get('source') or ''
+    if not src.strip(): return
+    first = src.lstrip().splitlines()[0]
+    if t == 'raw': cls = 'boop-raw'
+    elif t == 'markdown':
+        if first.startswith('# '): return          # leave the page-title (H1) cell alone
+        cls = 'boop-prompt' if _SEP_RE.search(src) else 'boop-note'
+    else: return                                    # code cells are handled in CSS
+    cell['source'] = f'::: {{.boopcell .{cls}}}\n{src}\n:::'
+```
+
+:::
+
+::: {.cell 0=‘e’ 1=‘x’ 2=‘p’ 3=‘o’ 4=‘r’ 5=‘t’}
+
+``` python
+import hashlib, os, shutil, socket, subprocess
+from datetime import date
+from pathlib import Path
+
+SHARE_REPO    = 'boops'                            # GitHub repo whose gh-pages branch serves the shared notebooks
+# Local Quarto project holding every share; only its _site is ever published. Deliberately NOT under
+# a dot-directory like ~/.boopiter: Quarto skips dot-prefixed paths when discovering a project's input
+# files, so a project rooted inside one finds zero documents and renders nothing (silently -- publish
+# still succeeds, having pushed an empty site). Sits with the user's other repos when that layout
+# exists, since it is a real git repo, and is shared by every boopiter instance regardless of the
+# directory the server was started in.
+SHARE_PROJECT = (Path.home()/'github'/SHARE_REPO) if (Path.home()/'github').is_dir() else (Path.home()/SHARE_REPO)
+# Assets the docs build keeps beside its generated _quarto.yml. Copied as-is rather than regenerated:
+# theme-toggle.html + styles.css are what give a page boopiter's sun/moon toggle and coloured cell
+# bars, and they only stay in step with the docs site by being the same files.
+_SHARE_ASSETS = ('styles.css', 'booptheme.scss', 'theme-toggle.html')
+_INDEX_QMD = """---
+title: "boops"
+subtitle: "Notebooks shared from [boopiter]({docs})"
+listing:
+  contents: "*/index.ipynb"
+  type: default
+  sort: "date desc"
+  fields: [title, date]
+  date-format: "YYYY-MM-DD"
+---
+"""
+
+def _repo_root() -> Path:
+    "The boopiter checkout this module was imported from -- where _proc/ and images/ live."
+    return Path(__file__).parent.parent if '__file__' in globals() else Path.cwd()
+
+def share_slug(path) -> str:
+    "Six hex chars identifying a notebook by machine and location: sha256 of hostname + its canonical path. Deterministic, so re-sharing the same file overwrites the same page and a link you've already sent stays current -- that's the whole point of not using a random suffix. Keyed on more than the basename because 'example.ipynb' in two checkouts, or on two machines, are different documents that would otherwise fight over one URL. realpath (not abspath) so two symlinked routes to one file still collapse to a single page, and a NUL separator so host 'a' + path 'b/c' can't collide with host 'a/b' + path 'c'."
+    key = f"{socket.gethostname()}\0{os.path.realpath(path)}"
+    return hashlib.sha256(key.encode()).hexdigest()[:6]
+
+def share_name(path) -> str:
+    "The published page's directory name for a notebook: '<basename>_<slug>' (see share_slug)."
+    return f'{Path(path).stem}_{share_slug(path)}'
+
+def _gh_owner() -> str:
+    "The GitHub login that owns the share repo, from the authenticated gh CLI."
+    r = subprocess.run(['gh', 'api', 'user', '--jq', '.login'], capture_output=True, text=True, timeout=30, check=True)
+    return r.stdout.strip()
+
+def _write_project_config(proc:Path, out:Path, docs_url:str|None) -> None:
+    "Write the share site's _quarto.yml from the docs build's generated one, adjusting only what genuinely differs. Deliberately NOT hand-written: theme, highlight styles, css and include-after-body all have to match the docs site, and the only way they stay matched is by being the same file. What changes: nbdev's pre/post-render steps (they build apilist/llms.txt for the full site), the sidebar and search (they index pages that aren't here), and sidebar.yml (generated per-site, absent from _proc). `drafts: unlinked` is what makes an unlisted share work -- Quarto still renders a draft page, it just keeps it out of listings and the sitemap, so the URL works but nothing points at it."
+    import yaml
+    cfg = yaml.safe_load((proc/'_quarto.yml').read_text())
+    proj = cfg.setdefault('project', {})
+    for k in ('pre-render', 'post-render', 'resources'): proj.pop(k, None)
+    proj['type'], proj['output-dir'] = 'website', '_site'
+    # No metadata-files at all: nbdev.yml is the only one present, and merging it would drag in the
+    # docs project's own settings -- notably output-dir: _docs, which silently overrides the output-dir
+    # set just above, so the render lands somewhere publish isn't looking. site-url is read from it
+    # directly instead (see _ensure_share_project).
+    cfg.pop('metadata-files', None)
+    site = cfg.setdefault('website', {})
+    site['sidebar'] = False
+    site['drafts'] = 'unlinked'          # unlisted shares: rendered and reachable, absent from the listing
+    site['title'] = 'boops'
+    site.pop('site-url', None)           # inherited from nbdev.yml and would point at the docs site
+    nav = site.setdefault('navbar', {})
+    nav['search'] = False                # navbar stays: it carries Quarto's colour-scheme toggle
+    if docs_url: nav['logo-href'] = nav['title-href'] = docs_url
+    logo = _repo_root()/'images'/'logo.png'
+    if logo.exists():
+        shutil.copy(logo, out/'logo.png')
+        site['favicon'] = 'logo.png'
+    (out/'_quarto.yml').write_text(yaml.safe_dump(cfg, sort_keys=False))
+
+def _ensure_share_project() -> Path:
+    "The local Quarto project every share is rendered inside, created on first use. One project rather than a throwaway per share is the whole point: Quarto then emits a single site_libs (Bootstrap, theme CSS, its JS) and one favicon for the site, instead of a ~2MB copy per notebook. It's a git repo with the share repo as its remote, because that's what `quarto publish gh-pages` pushes through -- but only the rendered _site is ever published, so notebook sources stay on this machine."
+    import yaml
+    proc = _repo_root()/'_proc'
+    if not (proc/'_quarto.yml').exists():
+        raise RuntimeError(f'{proc}/_quarto.yml not found -- run nbdev_docs once so the docs config exists')
+    first = not SHARE_PROJECT.exists()
+    SHARE_PROJECT.mkdir(parents=True, exist_ok=True)
+    for a in _SHARE_ASSETS:
+        if (proc/a).exists(): shutil.copy(proc/a, SHARE_PROJECT/a)
+    meta = yaml.safe_load((proc/'nbdev.yml').read_text()) if (proc/'nbdev.yml').exists() else {}
+    docs_url = (meta.get('website') or {}).get('site-url')
+    _write_project_config(proc, SHARE_PROJECT, docs_url)
+    (SHARE_PROJECT/'index.qmd').write_text(_INDEX_QMD.format(docs=docs_url or ''))
+    (SHARE_PROJECT/'.gitignore').write_text('_site/\n_docs/\n_freeze/\n.quarto/\n')
+    if first:
+        owner = _gh_owner()
+        if subprocess.run(['gh', 'repo', 'view', f'{owner}/{SHARE_REPO}'], capture_output=True).returncode:
+            subprocess.run(['gh', 'repo', 'create', f'{owner}/{SHARE_REPO}', '--public',
+                            '-d', 'Notebooks shared from boopiter'], capture_output=True, timeout=60, check=True)
+        subprocess.run(['git', 'init', '-q', '-b', 'main'], cwd=SHARE_PROJECT, check=True, timeout=60)
+        subprocess.run(['git', 'remote', 'add', 'origin', f'https://github.com/{owner}/{SHARE_REPO}.git'],
+                       cwd=SHARE_PROJECT, capture_output=True, timeout=60)
+        _ensure_gh_pages_branch(owner)
+    return SHARE_PROJECT
+
+def _ensure_gh_pages_branch(owner:str) -> None:
+    "Create an empty gh-pages branch on the remote if it has none, and point Pages at it.  refuses to bootstrap the branch itself under --no-prompt (it only offers to when run interactively), so we make it here with plumbing -- commit-tree over an empty tree -- which needs no checkout and so can't disturb the project's own working tree."
+    g = ['git', '-C', str(SHARE_PROJECT)]
+    if subprocess.run(g + ['ls-remote', '--exit-code', '--heads', 'origin', 'gh-pages'], capture_output=True).returncode:
+        tree = subprocess.run(g + ['mktree'], input=b'', capture_output=True, check=True).stdout.strip().decode()
+        commit = subprocess.run(g + ['-c', 'user.email=boopiter@localhost', '-c', 'user.name=boopiter',
+                                     'commit-tree', tree, '-m', 'Initialize gh-pages'],
+                                capture_output=True, check=True).stdout.strip().decode()
+        subprocess.run(g + ['push', 'origin', f'{commit}:refs/heads/gh-pages'], capture_output=True, check=True, timeout=120)
+    subprocess.run(['gh', 'api', '-X', 'PUT', f'repos/{owner}/{SHARE_REPO}/pages',
+                    '-f', 'source[branch]=gh-pages', '-f', 'source[path]=/'], capture_output=True, timeout=60)
+
+def _write_share(nb_path, listed:bool) -> str:
+    "Put the processed notebook into the share project as <name>/index.ipynb, with a sibling _metadata.yml carrying its listed/unlisted state. Uses Quarto's per-directory metadata (the same mechanism a Quarto blog uses for posts/_metadata.yml) rather than injecting front matter, so the notebook itself is never rewritten and flipping public<->unlisted is a one-line file change. The title needs nothing: Quarto takes an .ipynb's title from its first '# ' heading, and color_cells deliberately leaves that H1 cell alone. Returns the share's directory name."
+    import nbformat
+    name = share_name(nb_path)
+    d = SHARE_PROJECT/name
+    d.mkdir(parents=True, exist_ok=True)
+    doc = nbformat.read(str(nb_path), as_version=4)
+    for c in doc.cells: color_cells(c)
+    # nbformat, NOT json.dump: nbformat stores a cell's source as a list of lines, and writing it
+    # back as one string makes Quarto read the ::: fences as literal text, silently dropping the bars.
+    nbformat.write(doc, str(d/'index.ipynb'))
+    meta = f'date: {date.today().isoformat()}\n'
+    # Quarto titles an .ipynb from its first '# ' heading (which is why color_cells leaves that cell
+    # alone). With no such heading it would fall back to the filename 'index', identical for every
+    # share, so name it after the notebook instead.
+    if not any(c.cell_type == 'markdown' and c.source.lstrip().startswith('# ') for c in doc.cells):
+        meta += f'title: "{Path(nb_path).stem}"\n'
+    if not listed: meta += 'draft: true\n'      # see 'drafts: unlinked' in _write_project_config
+    (d/'_metadata.yml').write_text(meta)
+    return name
+
+def share_notebook(nb_path, listed:bool=True) -> str:
+    "Render `nb_path` into the share site and publish it, returning the public URL. `listed` puts it on the site's index; unlisted pages are still rendered and reachable by URL, just not indexed -- and re-sharing with the other choice flips that, since the state lives in a file that gets rewritten. Overwrites in place: the directory is named from the notebook's identity (see share_slug), so a correction updates the page a recipient already has the link to. Publishing goes through `quarto publish gh-pages`, which renders locally and pushes only the built site to the gh-pages branch -- the same flow a Quarto blog uses, and the reason notebook sources never leave this machine. Returns as soon as the push lands; GitHub Pages then takes roughly a minute to rebuild."
+    proj  = _ensure_share_project()
+    name  = _write_share(nb_path, listed)
+    owner = _gh_owner()
+    subprocess.run(['quarto', 'publish', 'gh-pages', '--no-prompt', '--no-browser'],
+                   cwd=proj, capture_output=True, timeout=900, check=True)
+    return f'https://{owner}.github.io/{SHARE_REPO}/{name}/'
+```
+
+:::
