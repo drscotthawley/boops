@@ -294,6 +294,7 @@ display({'text/html': f'<iframe srcdoc="{h}" width="100%" height="500" style="bo
 
 <div class="boopcell boop-note">
 
-Go ahead! Manipulate that plot with your mouse. Press & drag, etc.
+^^Go ahead! Manipulate that plot with your mouse. Press & drag, zoom in,
+etc.
 
 </div>
