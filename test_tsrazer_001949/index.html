@@ -118,12 +118,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="../styles.css">
 <meta property="og:title" content="Testing Local LLMs on tsrazer – boops">
 <meta property="og:description" content="Claude is down. What are we supposed to do? Use our brains?">
-<meta property="og:image" content="https://drscotthawley.github.io/boops/test_tsrazer_001949/529ec5ed294247b21aa8f2856102b97f.jpg">
+<meta property="og:image" content="529ec5ed294247b21aa8f2856102b97f.jpg">
 <meta property="og:site_name" content="boops">
 <meta property="og:image:alt" content="pasted image">
 <meta name="twitter:title" content="Testing Local LLMs on tsrazer – boops">
 <meta name="twitter:description" content="Claude is down. What are we supposed to do? Use our brains?">
-<meta name="twitter:image" content="https://drscotthawley.github.io/boops/test_tsrazer_001949/529ec5ed294247b21aa8f2856102b97f.jpg">
+<meta name="twitter:image" content="529ec5ed294247b21aa8f2856102b97f.jpg">
 <meta name="twitter:image:alt" content="pasted image">
 <meta name="twitter:card" content="summary_large_image">
 </head>
@@ -2567,7 +2567,7 @@ Output Generation.
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/drscotthawley\.github\.io\/boops\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
