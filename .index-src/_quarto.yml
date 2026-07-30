@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: _site
+format:
+  html:
+    theme:
+      dark:
+      - cosmo
+      - booptheme.scss
+      light: cosmo
+    highlight-style:
+      light: arrow
+      dark: dracula
+    css: styles.css
+    include-after-body: theme-toggle.html
+    toc: true
+    keep-md: true
+  commonmark: default
+website:
+  twitter-card: true
+  open-graph: true
+  repo-actions:
+  - issue
+  navbar:
+    background: dark
+    search: false
+  sidebar: false
+  drafts: unlinked
+  title: boops
+  favicon: logo.png
