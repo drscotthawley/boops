@@ -1,0 +1,55 @@
+name: build-index
+
+# Dispatched by boopiter right after it pushes a share (see _trigger_index_build in docsprocs.py),
+# and runnable by hand from the Actions tab. Deliberately NOT `on: push` to gh-pages: a workflow
+# triggered by a branch push has to live on that branch, which would put .github/ in among the
+# published site. Pushes made here use GITHUB_TOKEN, which by design does not trigger further
+# workflow runs, so writing the index back to gh-pages cannot loop.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two machines can share at nearly the same moment; serialise so the second rebuild sees the first
+# one's page instead of racing it. Never cancel -- a cancelled rebuild leaves the index a share behind.
+concurrency:
+  group: build-index
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main (this workflow and its script)
+        uses: actions/checkout@v4
+
+      - name: Check out gh-pages (the published site)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+
+      # Pinned to the version boopiter renders pages with: site_libs is shared between the index and
+      # every page, so a different Quarto here could write assets the already-published pages don't match.
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.10.18
+
+      - run: pip install pyyaml
+
+      - name: Rebuild the index from every page on the branch
+        run: python3 .github/scripts/build_index.py
+
+      - name: Push it back to gh-pages
+        working-directory: site
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "index unchanged, nothing to push"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Rebuild index"
+          git push
