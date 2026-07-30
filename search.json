@@ -1,37 +1,16 @@
 [
   {
-    "objectID": "test_tsrazer_001949/index.html",
-    "href": "test_tsrazer_001949/index.html",
-    "title": "Testing Local LLMs on tsrazer",
+    "objectID": "test_boop_c86337/index.html",
+    "href": "test_boop_c86337/index.html",
+    "title": "Test Boop",
     "section": "",
-    "text": "Using ollama with Qwen3.6 27B2 - Thinking ✅ - Vision ✅ - Tools ✅ - 5~17–19 GB VRAM - …and it’s Practically Interactive"
-  },
-  {
-    "objectID": "test_tsrazer_001949/index.html#this-machine-razer-blade-18-2026-loaner",
-    "href": "test_tsrazer_001949/index.html#this-machine-razer-blade-18-2026-loaner",
-    "title": "Testing Local LLMs on tsrazer",
-    "section": "This Machine: Razer Blade 18 (2026 loaner)",
-    "text": "This Machine: Razer Blade 18 (2026 loaner)\nOS: - Ubuntu 26.04 LTS – Dual boot with Windows 11\n\nI have to reconfigure these machines for straight up Ubuntu because Windows and WSL2 eats about eight gigabytes of system RAM, which maybe isn’t that big a deal on this machine, but also you get a lot of system instability, and the thing will lock up and freeze. I got tired of it. Ubuntu is rock solid.\n\nGPU: NVIDIA GeForce RTX 5090 Laptop GPU\nMemory: 64 GB RAM – yea, it’s nice\nVRAM: 24 GB VRAM\nLocal LLM Findings: Qwen3 14B runs comfortably Qwen3.6 27B runs surprisingly well ~17–19 GB VRAM usage for Qwen3.6:27B Qwen3 32B appears to hit memory-pressure territory"
-  },
-  {
-    "objectID": "test_tsrazer_001949/index.html#first-test-prompt",
-    "href": "test_tsrazer_001949/index.html#first-test-prompt",
-    "title": "Testing Local LLMs on tsrazer",
-    "section": "First Test Prompt",
-    "text": "First Test Prompt"
-  },
-  {
-    "objectID": "test_tsrazer_001949/index.html#an-image-prompt",
-    "href": "test_tsrazer_001949/index.html#an-image-prompt",
-    "title": "Testing Local LLMs on tsrazer",
-    "section": "An Image Prompt",
-    "text": "An Image Prompt\nYep, this model supports computer vision, so let’s see what it does…"
+    "text": "boop!\n\n\n\npasted image\n\n\n\n🤖Reply🤖\n\n\nReply details\n\n\n\nModel: qwen3-vl:4b\n\n\nFinish reason: stop\n\n\nTokens: 2467 prompt + 549 completion = 3016 total\n\n\nOkay, let me try to figure out how to approach this. The user provided an image of a cat in a Whole Foods bag, along with some note and prompt tags. The instruction says they want me to respond as if I'm the model, and they mention that if the task requires using the provided functions, I should write the code inside a Python code block.\n\nFirst, I need to check if the user's request actually needs any of those functions. The functions listed are for reading, editing, and writing Jupyter notebooks, PDF extraction, GPU checks, and installing skills. The user's message includes an image, a note saying \"Test Boop\", and a prompt \"boop!\" with an image link.\n\nLooking at the problem, the user is probably testing the system's ability to handle different kinds of inputs. The image is just a picture, so there's no need to process it with any of the given functions. The note and prompt are part of the context, but the actual task here might be to recognize that there's no file manipulation needed here.\n\nWait, the user included [img] and [note] and [prompt] tags. Maybe they want to see if I can respond to a message that's structured with those tags. But the instructions say that if the task genuinely requires one of the functions, I need to provide the code. Since the problem is about an image and some text, and the functions are for notebook operations, which aren't related to processing images, there's no need to use any of those tools here.\n\nSo the correct response is to just answer normally, without using any of the provided functions. The user might be testing if the model realizes that it doesn't need to perform file operations for this task. The key is that the user's request is about interpreting the context (the image and text), not editing notebooks or anything else.\n\nLet me confirm: none of the functions are related to processing images or handling the image data. The functions are all for Jupyter notebook manipulations, PDF extraction, etc. The user's image is just a picture, so no tool is needed. Therefore, the correct approach is to ignore the functions and respond as a normal answer, acknowledging the image and prompt.\n\nThis is a fun image of a cat hiding in a Whole Foods grocery bag! 🐾 The note and prompt “boop!” seem to be part of a playful test. While the image looks like a classic “cat in a bag” moment, no file manipulation or notebook editing is needed here—this is purely a visual context. If you’d like to work with Jupyter notebooks or other tools from the provided list, just let me know! 😊"
   },
   {
     "objectID": "index.html",
     "href": "index.html",
     "title": "boops",
     "section": "",
-    "text": "Testing Local LLMs on tsrazer\n\n\nClaude is down. What are we supposed to do? Use our brains?\n\n\n\n2026-07-29\n\n\n\n\n\n\nNo matching items"
+    "text": "Test Boop\n\n\nTesting boopiter’s sweet new sharing feature.\n\n\n\n2026-07-29\n\n\n\n\n\n\n\n\n\n\n\nTesting Local LLMs on tsrazer\n\n\nClaude is down. What are we supposed to do? Use our brains?\n\n\n\n2026-07-29\n\n\n\n\n\n\nNo matching items"
   }
 ]
