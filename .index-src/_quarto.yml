@@ -25,6 +25,6 @@ website:
     background: dark
     search: false
   sidebar: false
-  drafts: unlinked
+  draft-mode: unlinked
   title: boops
   favicon: logo.png
